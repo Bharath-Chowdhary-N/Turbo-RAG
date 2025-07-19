@@ -13,6 +13,7 @@ class repo_processor():
 
 
         # Download repo is it does not exist
+        print("!!!!!!! Step 1: Cloning Repo !!!!!!!!!!!!!")
         self.clone_repo()
     
     def clone_repo(self):
