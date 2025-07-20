@@ -44,10 +44,16 @@ class repo_processor():
             bool: True if the file should be processed, False otherwise.
         """
         # Placeholder for file processing logic
-        print("Processing files in the cloned repository...")
+        #print("Processing files in the cloned repository...")
         # Implement file processing logic here
-        skip_file_extensions = {'.idx', '.pack', '.pyc', '.rev', '.sample'} # I read through the repo and found these files were not reuired
-        skip_file_folders = {'node_modules', '.git', '__pycache__', '.venv', 'venv', 'env'}  # Folders to skip
+        skip_file_extensions = {
+        '.idx', '.pack', '.pyc', '.rev', '.sample',
+        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp',  
+        '.pdf', '.zip', '.tar', '.gz', '.rar', '.7z',              
+        '.mp4', '.avi', '.mov', '.wmv', '.mp3', '.wav',            
+        '.exe', '.dll', '.so', '.dylib'                            
+        }
+        skip_file_folders = {'node_modules', '.git', '__pycache__', '.venv', 'venv', 'env', 'wiki_data'}  
 
         for part in file_path.parts:
             if part in skip_file_folders:
@@ -123,7 +129,7 @@ class repo_processor():
                     for i,chunk in enumerate(chunks):
                         chunk_id = hashlib.md5(f"{relative_path}_{i}_{chunk[:100]}".encode()).hexdigest()
                         documents.append(chunk)
-                        metadatas.append({'file_path': relative_path,'chunk_index': i, 'filetype': file_path.suffix, 'url': self.target_repo}) #add file_path, chunk_index, filetype, repo_url
+                        metadatas.append({'file_path': str(relative_path),'chunk_index': i, 'filetype': file_path.suffix, 'url': self.target_repo}) #add file_path, chunk_index, filetype, repo_url
                         ids.append(chunk_id)
                 
         if documents:
