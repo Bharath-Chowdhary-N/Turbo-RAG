@@ -12,8 +12,8 @@ from typing import List, Dict, Any
 class repo_processor():
     def __init__(self, repo_url:str):
         self.target_repo = repo_url #Address
-        self.clone_path = "/home/bcn/Work/PostDoc/"
-        self.clone_location = "/home/bcn/Work/PostDoc/turbo_telescope-master/"  #clone location
+        self.clone_path = f"./temp_repo_{hashlib.md5(repo_url.encode()).hexdigest()[:8]}"
+        self.clone_location = self.clone_path
 
         #chromadb client
         self.client = chromadb.PersistentClient(path="./chroma_db")
