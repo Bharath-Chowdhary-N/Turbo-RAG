@@ -10,8 +10,8 @@ import hashlib
 from typing import List, Dict, Any
 
 class repo_processor():
-    def __init__(self):
-        self.target_repo = "https://github.com/patkel/turbo_telescope" #Address
+    def __init__(self, repo_url:str):
+        self.target_repo = repo_url #Address
         self.clone_path = "/home/bcn/Work/PostDoc/"
         self.clone_location = "/home/bcn/Work/PostDoc/turbo_telescope-master/"  #clone location
 
