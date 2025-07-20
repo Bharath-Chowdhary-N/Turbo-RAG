@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 import chromadb
 import hashlib
+from typing import List, Dict, Any
 
 class repo_processor():
     def __init__(self):
@@ -132,9 +133,15 @@ class repo_processor():
         print(" Removing clone repo ...................")
         shutil.rmtree(self.clone_location)
 
-           
+    def search_similar_to_query(self,query: str, n_results: int = 5) -> List[Dict[str, Any]]:
 
-        
-        
+        results = self.collection.query(query_texts==[query], n_results=n_results)
 
+        return [{
+            'content': document,
+            'metadata': metadata,
+            'score':id
+            }
+            for document, metadata, id in zip(results['documents'][0], results['metadatas'][0], results['ids'][0])
+        ]
     
