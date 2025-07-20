@@ -18,6 +18,14 @@ class RAG():
     
     def search_relevant(self, query: str, n_results: int = 5) -> List[Dict[str,Any]]:
         return self.repo_processor.search_similar_to_query(query, n_results)
+    def generate_context(self, search_results):
+        """Generate context from search results"""
+        context = ""
+        for result in search_results:
+            file_path = result['metadata']['file_path']  
+            content = result['content']                   
+            context += f"File: {file_path}\n```\n{content}\n```\n\n"
+        return context
     
     def ask_question(self, question: str) -> str:
         search_results = self.search_relevant(query=question)

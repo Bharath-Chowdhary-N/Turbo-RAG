@@ -135,7 +135,7 @@ class repo_processor():
 
     def search_similar_to_query(self,query: str, n_results: int = 5) -> List[Dict[str, Any]]:
 
-        results = self.collection.query(query_texts==[query], n_results=n_results)
+        results = self.collection.query(query_texts=[query], n_results=n_results)
 
         return [{
             'content': document,
