@@ -6,6 +6,7 @@ import git
 import shutil
 from pathlib import Path
 import chromadb
+import hashlib
 
 class repo_processor():
     def __init__(self):
@@ -103,8 +104,33 @@ class repo_processor():
         Function: processess all files in a repo and makes it as chunk and
         """
         repo_path = Path(self.clone_location)
-        retunr None
+        
 
+        print(" Processing repo and storing in chroma db ...................")
+        documents = []
+        metadatas = []
+        ids = []
+                 
+        for file_path in repo_path.rglob("*"):
+
+            if self.should_process_file(file_path=file_path) and file_path.is_file():
+                relative_path  = file_path.relative_to(repo_path)
+                content = self.get_file_content(file_path=file_path)
+                
+                if content.strip():
+                    chunks = self.get_chunks(content)
+                    for i,chunk in enumerate(chunks):
+                        chunk_id = hashlib.md5(f"{relative_path}_{i}_{chunk[:100]}".encode()).hexdigest()
+                        documents.append(chunk)
+                        metadatas.append({'file_path': relative_path,'chunk_index': i, 'filetype': file_path.suffix, 'url': self.target_repo}) #add file_path, chunk_index, filetype, repo_url
+                        ids.append(chunk_id)
+                
+        if documents:
+            print(" Storing id, documents, metadatas ...................")
+            self.collection.add(documents=documents, metadatas=metadatas, ids=ids)        
+
+        print(" Removing clone repo ...................")
+        shutil.rmtree(self.clone_location)
 
            
 
