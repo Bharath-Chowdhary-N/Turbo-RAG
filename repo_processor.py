@@ -5,11 +5,17 @@ import os
 import git
 import shutil
 from pathlib import Path
+import chromadb
+
 class repo_processor():
     def __init__(self):
         self.target_repo = "https://github.com/patkel/turbo_telescope" #Address
         self.clone_path = "/home/bcn/Work/PostDoc/"
         self.clone_location = "/home/bcn/Work/PostDoc/turbo_telescope-master/"  #clone location
+
+        #chromadb client
+        self.client = chromadb.PersistentClient(path="./chroma_db")
+        self.collection = self.client.get_or_create_collection(name="github_repo")
 
 
         # Download repo is it does not exist
@@ -92,6 +98,13 @@ class repo_processor():
 
         return chunk_list
     
+    def process_repo(self):
+        """
+        Function: processess all files in a repo and makes it as chunk and
+        """
+        repo_path = Path(self.clone_location)
+        retunr None
+
 
            
 
