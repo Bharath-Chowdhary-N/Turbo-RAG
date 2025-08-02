@@ -312,7 +312,7 @@ def main():
         # Source filter
         source_filter = st.selectbox(
             "Search in:",
-            options=["both", "github", "slack"],
+            options=["github", "slack","both"],
             format_func=lambda x: {
                 "both": "🔍 Both GitHub & Slack",
                 "github": "💻 GitHub Repository Only", 
