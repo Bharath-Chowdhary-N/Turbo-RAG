@@ -2,20 +2,26 @@ import streamlit as st
 import os
 from sentence_transformers import SentenceTransformer
 import anthropic
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from typing import List, Dict, Any
 import time
 from datetime import datetime
 
-# Handle Pinecone import with compatibility
+
+# Load environment variables for local development only
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # On Streamlit Cloud, this is fine - uses st.secrets instead
+    pass
+
+# Handle Pinecone import
 try:
     from pinecone import Pinecone
 except ImportError:
-    st.error("❌ Please update your requirements.txt to use 'pinecone' instead of 'pinecone-client'")
+    st.error("❌ Please update your requirements.txt")
     st.stop()
-
-# Load environment variables
-load_dotenv()
 
 class PineconeRAGSystem:
     def __init__(self, pinecone_index_name: str = "turbo-rag-index"):
