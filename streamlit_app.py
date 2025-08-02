@@ -2,25 +2,24 @@ import streamlit as st
 import os
 from sentence_transformers import SentenceTransformer
 import anthropic
-#from dotenv import load_dotenv
 from typing import List, Dict, Any
 import time
 from datetime import datetime
-
 
 # Load environment variables for local development only
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    # On Streamlit Cloud, this is fine - uses st.secrets instead
+    # On Streamlit Cloud, python-dotenv is not installed, which is fine
+    # Streamlit Cloud uses st.secrets instead
     pass
 
-# Handle Pinecone import
+# Handle Pinecone import with compatibility
 try:
     from pinecone import Pinecone
 except ImportError:
-    st.error("❌ Please update your requirements.txt")
+    st.error("❌ Please update your requirements.txt to use 'pinecone' instead of 'pinecone-client'")
     st.stop()
 
 class PineconeRAGSystem:
@@ -153,7 +152,7 @@ class PineconeRAGSystem:
         response_start = time.time()
         try:
             response = self.anthropic_client.messages.create(
-                model="claude-3-sonnet-20240229",
+                model="claude-sonnet-4-20250514",
                 max_tokens=2000,
                 messages=[{"role": "user", "content": prompt}]
             )
@@ -365,27 +364,35 @@ def main():
     with col1:
         st.subheader("💬 Ask Your Question")
         
+        # Initialize session state for question if not exists
+        if 'current_question' not in st.session_state:
+            st.session_state.current_question = ""
+        
         # Handle example question selection
-        default_question = ""
         if 'example_question' in st.session_state:
-            default_question = st.session_state.example_question
+            st.session_state.current_question = st.session_state.example_question
             del st.session_state.example_question
         
-        # Question input
+        # Question input with session state
         question = st.text_area(
             "Enter your question:",
-            value=default_question,
+            value=st.session_state.current_question,
             height=100,
             placeholder="e.g., How does the authentication system work? What did the team decide about the database schema?",
-            help="Ask anything about your GitHub repository code or Slack team discussions"
+            help="Ask anything about your GitHub repository code or Slack team discussions",
+            key="question_input",
+            on_change=lambda: setattr(st.session_state, 'current_question', st.session_state.question_input)
         )
         
         # Submit button
         if st.button("🔍 Search & Answer", type="primary", use_container_width=True):
-            if question.strip():
+            # Use the current value from session state
+            current_question = st.session_state.get('question_input', '').strip()
+            
+            if current_question:
                 with st.spinner("🔍 Searching for relevant information..."):
                     # Get answer
-                    result = rag_system.ask_question(question, source_filter, top_k)
+                    result = rag_system.ask_question(current_question, source_filter, top_k)
                     
                     # Display answer
                     st.subheader("💡 Answer")
