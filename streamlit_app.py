@@ -129,8 +129,8 @@ class PineconeRAGSystem:
         response_start = time.time()
         try:
             response = self.anthropic_client.messages.create(
-                model="claude-3-5-sonnet-20241022",  # Updated to current model
-                max_tokens=2000,
+                model="claude-sonnet-4-20250514",  # Updated to current model
+                max_tokens=1000,
                 messages=[{"role": "user", "content": prompt}]
             )
             
@@ -322,6 +322,7 @@ def main():
         for question in example_questions:
             if st.button(question, key=f"example_{hash(question)}", use_container_width=True):
                 st.session_state.example_question = question
+                st.rerun()  # Force rerun to update the text area
     
     # Main content area
     col1, col2 = st.columns([3, 1])
@@ -333,7 +334,7 @@ def main():
         default_question = ""
         if 'example_question' in st.session_state:
             default_question = st.session_state.example_question
-            del st.session_state.example_question
+            # Don't delete immediately - let user see it and submit
         
         # Question input
         question = st.text_area(
@@ -347,6 +348,10 @@ def main():
         # Submit button
         if st.button("🔍 Search & Answer", type="primary", use_container_width=True):
             if question.strip():
+                # Clear the example question from session state after submission
+                if 'example_question' in st.session_state:
+                    del st.session_state.example_question
+                    
                 with st.spinner("🔍 Searching for relevant information..."):
                     # Get answer
                     result = rag_system.ask_question(question, source_filter, top_k)
