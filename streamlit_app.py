@@ -1,12 +1,18 @@
 import streamlit as st
 import os
-from pinecone import Pinecone
 from sentence_transformers import SentenceTransformer
 import anthropic
 from dotenv import load_dotenv
 from typing import List, Dict, Any
 import time
 from datetime import datetime
+
+# Handle Pinecone import with compatibility
+try:
+    from pinecone import Pinecone
+except ImportError:
+    st.error("❌ Please update your requirements.txt to use 'pinecone' instead of 'pinecone-client'")
+    st.stop()
 
 # Load environment variables
 load_dotenv()
@@ -17,7 +23,13 @@ class PineconeRAGSystem:
         
         # Initialize Pinecone
         try:
-            self.pinecone_client = Pinecone(api_key=os.getenv('PINECONE_API_KEY'))
+            # Try to get API key from Streamlit secrets first, then environment variables
+            pinecone_api_key = st.secrets.get("PINECONE_API_KEY") or os.getenv('PINECONE_API_KEY')
+            if not pinecone_api_key:
+                st.error("❌ PINECONE_API_KEY not found in secrets or environment variables")
+                st.stop()
+                
+            self.pinecone_client = Pinecone(api_key=pinecone_api_key)
             self.pinecone_index = self.pinecone_client.Index(pinecone_index_name)
         except Exception as e:
             st.error(f"Failed to connect to Pinecone: {e}")
@@ -32,7 +44,13 @@ class PineconeRAGSystem:
         
         # Initialize Anthropic Claude
         try:
-            self.anthropic_client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+            # Try to get API key from Streamlit secrets first, then environment variables
+            anthropic_api_key = st.secrets.get("ANTHROPIC_API_KEY") or os.getenv('ANTHROPIC_API_KEY')
+            if not anthropic_api_key:
+                st.error("❌ ANTHROPIC_API_KEY not found in secrets or environment variables")
+                st.stop()
+                
+            self.anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key)
         except Exception as e:
             st.error(f"Failed to initialize Claude: {e}")
             st.stop()
@@ -129,8 +147,8 @@ class PineconeRAGSystem:
         response_start = time.time()
         try:
             response = self.anthropic_client.messages.create(
-                model="claude-sonnet-4-20250514",  # Updated to current model
-                max_tokens=1000,
+                model="claude-3-sonnet-20240229",
+                max_tokens=2000,
                 messages=[{"role": "user", "content": prompt}]
             )
             
@@ -250,12 +268,24 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Check API keys
-    pinecone_key = os.getenv('PINECONE_API_KEY')
-    anthropic_key = os.getenv('ANTHROPIC_API_KEY')
+    # Check API keys from both sources
+    pinecone_key = st.secrets.get("PINECONE_API_KEY") or os.getenv('PINECONE_API_KEY')
+    anthropic_key = st.secrets.get("ANTHROPIC_API_KEY") or os.getenv('ANTHROPIC_API_KEY')
     
     if not pinecone_key or not anthropic_key:
-        st.error("🔑 Please set your PINECONE_API_KEY and ANTHROPIC_API_KEY in your environment variables or .env file")
+        st.error("🔑 Please set your API keys:")
+        st.markdown("""
+        **For local development:** Create a `.env` file with:
+        ```
+        PINECONE_API_KEY=your_pinecone_key
+        ANTHROPIC_API_KEY=your_anthropic_key
+        ```
+        
+        **For Streamlit Cloud:** Add secrets in your app dashboard:
+        - Go to your app settings
+        - Click "Secrets" 
+        - Add your API keys
+        """)
         st.stop()
     
     # Initialize RAG system
@@ -322,7 +352,6 @@ def main():
         for question in example_questions:
             if st.button(question, key=f"example_{hash(question)}", use_container_width=True):
                 st.session_state.example_question = question
-                st.rerun()  # Force rerun to update the text area
     
     # Main content area
     col1, col2 = st.columns([3, 1])
@@ -334,7 +363,7 @@ def main():
         default_question = ""
         if 'example_question' in st.session_state:
             default_question = st.session_state.example_question
-            # Don't delete immediately - let user see it and submit
+            del st.session_state.example_question
         
         # Question input
         question = st.text_area(
@@ -348,10 +377,6 @@ def main():
         # Submit button
         if st.button("🔍 Search & Answer", type="primary", use_container_width=True):
             if question.strip():
-                # Clear the example question from session state after submission
-                if 'example_question' in st.session_state:
-                    del st.session_state.example_question
-                    
                 with st.spinner("🔍 Searching for relevant information..."):
                     # Get answer
                     result = rag_system.ask_question(question, source_filter, top_k)
